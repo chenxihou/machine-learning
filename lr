@@ -1,0 +1,43 @@
+import tensorflow as tf
+import numpy as np
+from sklearn.metrics import roc_auc_score
+
+num = 100
+dim = 5
+input_data = np.random.random(size=(num, dim)).astype(np.float32)
+output_data = np.random.randint(0, 2, size=(num, 1)).astype(np.float32)
+
+# input_data = np.array([
+#     [1, 1, 0, 0, 0],
+#     [1, 1, 1, 0, 0],
+#     [0, 1, 1, 1, 0],
+#     [0, 0, 1, 1, 1],
+#     [0, 0, 0, 1, 1],
+# ]).astype(np.float32)
+#
+# output_data = np.array([1, 1, 1, 0, 0]).reshape(-1, 1).astype(np.float32)
+
+print(output_data.shape)
+
+xs = tf.placeholder(shape=(None, dim), dtype=tf.float32)
+ys = tf.placeholder(shape=(None, 1), dtype=tf.float32)
+
+Weight = tf.Variable(tf.random_normal(shape=(dim, 1), mean=0.0, stddev=1.0))
+b = tf.Variable(tf.zeros(shape=[1], dtype=tf.float32))
+y = tf.sigmoid(tf.matmul(xs, Weight) + b)
+loss = tf.reduce_mean(-(ys*tf.log(y)+(1-ys)*tf.log(1-y)))
+optimizer = tf.train.GradientDescentOptimizer(0.1)
+train = optimizer.minimize(loss)
+
+init = tf.initialize_all_variables()
+
+with tf.Session() as sess:
+    sess.run(init)
+    sess.run(train, feed_dict={xs: input_data, ys: output_data})
+    for i in range(1000):
+        sess.run(train, feed_dict={xs: input_data, ys: output_data})
+        if i % 100 == 0:
+            prediction = sess.run(y, feed_dict={xs: input_data, ys: output_data})
+            loss_value = sess.run(loss, feed_dict={xs: input_data, ys: output_data})
+
+            print(roc_auc_score(output_data, prediction), loss_value)
